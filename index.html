@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retention Performance Recovery Program</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{fontFamily:{sans:['"IBM Plex Sans"','system-ui','sans-serif']},colors:{lav:{50:'#efe6f7',100:'#D6BDE4',500:'#98A4D8',700:'#4a2c63'},pk:{50:'#FFD5E5',100:'#FEC0B3',500:'#CE90C8',700:'#7a2f6b'}}}}}
+</script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js"></script>
+<style>
+body{background:linear-gradient(180deg,#98A4D8 0%,#D6BDE4 28%,#FFD5E5 62%,#FEC0B3 100%) fixed;color:#2e1f3d;min-height:100vh}
+:focus-visible{outline:3px solid #4a2c63;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body class="font-sans antialiased">
+<div id="root"></div>
+<script>
+const {useState,useMemo}=React;
+const html=htm.bind(React.createElement);
+
+const PHASES=[
+ {c:'#98A4D8',id:'w1',label:'Week 1',title:'Foundations & Discovery',status:'Completed',
+  mods:['Module 1: Staying in the Conversation','Module 2: Genuine Discovery'],
+  acts:['Calibration','Call listening sessions']},
+ {c:'#D6BDE4',id:'w12',label:'Week 1.2',title:'Application & Simulation',status:'Completed',
+  mods:['Structured mock calls on Modules 1 and 2','Intensive coaching sessions'],
+  acts:['Mock call review','Feedback loops']},
+ {c:'#FEC0B3',id:'w2',label:'Week 2',title:'Value Preservation & Strategic Negotiation',status:'Current',
+  mods:['Module 3: Diagnose & Resolve Before Discounting','Module 4: Value & Discount Discipline'],
+  acts:['Daily focused 1:1 simulation and coaching per focus agent']},
+ {c:'#FFD5E5',id:'w22',label:'Week 2.2',title:'Consolidation & Sustain',status:'Upcoming',
+  mods:['Live call integration of Modules 1 to 4','Self-coaching and peer calibration'],
+  acts:['Results review','Handover to steady-state coaching']},
+];
+
+const COLS=['#FEC0B3','#CE90C8','#98A4D8'];
+const CADENCE=[
+ {t:'Call Selection',m:5,d:'Review 1 previous shift call for premature concessions.'},
+ {t:'Diagnostic Simulation',m:10,d:'Run 1 scenario from the engine focusing on root causes.'},
+ {t:'Shift Anchor Commitment',m:5,d:"Lock in 1 behavioral trigger for the day's queue."},
+];
+
+const LADDER=[
+ {k:'Tier 1',n:'Fix the problem',when:'The cancel reason is a service, billing, or product issue that can be resolved.',
+  what:'Resolve the root cause, correct the error, or right-size the plan. No financial concession.',
+  gate:'Always first. Confirm the customer agrees the issue is solved before moving on.'},
+ {k:'Tier 2',n:'Add value',when:'The customer says the product no longer fits, or they use only part of it.',
+  what:'Offer a feature, add-on, or plan change that matches their stated need, at no extra cost where policy allows.',
+  gate:'Tie it to something the customer said in discovery.'},
+ {k:'Tier 3',n:'Time-limited credit',when:'Price is confirmed as the real barrier after Tiers 1 and 2.',
+  what:'Offer the smallest approved bill credit or short-term adjustment.',
+  gate:'Use only the amounts in the current offer policy. Say what it is and when it ends.'},
+ {k:'Tier 4',n:'Approved discount',when:'The customer still intends to leave after Tier 3 and the account qualifies.',
+  what:'Offer the approved discount level for the account, with the lowest effective cost to margin and APRPU.',
+  gate:'Requires a clear objection, a documented reason, and any needed approval.'},
+];
+
+const TALK=[
+ {m:'Module 3',t:'Diagnose first',s:"Before we look at any options, help me understand what's led you to cancel today. What changed?"},
+ {m:'Module 3',t:'Confirm the root cause',s:"So the main issue is the bill went up after your promotion ended, and nothing is wrong with the service. Did I get that right?"},
+ {m:'Module 4',t:'Reframe value',s:"You mentioned you stream every evening and work from home. Let's make sure the plan fits that before we talk about price."},
+ {m:'Module 4',t:'Hold the line',s:"I hear that price matters. Let me show you what I can do, and I'll start with the option that keeps everything you use."},
+];
+
+const DOS=['Let the customer finish, then paraphrase the reason for cancelling.','Resolve the stated problem before any offer.','Move up the ladder one tier at a time.','Link every offer to something the customer said.','Recap the agreed outcome and next steps.'];
+const DONTS=['Lead with a discount in the first minutes of the call.','Skip tiers because the customer sounds frustrated.','Offer anything outside current policy.','Stack several concessions in one breath.','Treat a first "no" as a request for more money.'];
+
+const STEPS=['Opens professionally and takes ownership','Listens without interrupting','Acknowledges the customer’s feeling with empathy','Probes with open questions to find the root cause','Paraphrases and confirms the cancel reason','Diagnoses and resolves the issue before offering anything','Reframes value around the customer’s stated need','Starts with the lowest tier on the offer ladder','Escalates only after an objection, with a reason','Checks acceptance and handles the objection','Recaps the outcome and next steps clearly','Documents the call and disposition accurately'];
+const AUTOFAIL=['Offers a discount before any discovery','Offers a concession outside current policy','Gives false or misleading price or contract information','Skips required account verification','Abandons the customer or ends the call without resolution','Uses rude or unprofessional language','Processes the cancellation with no save attempt'];
+
+const SCEN=[
+ {t:'Promo ended, bill jumped',p:'"My bill went up and I never agreed to that. Cancel it."',
+  tone:'Frustrated',
+  why:'Surface issue is price, but the real issue is surprise. Acknowledge the surprise, explain what changed, then check current usage. Start at Tier 1 or 2 before any credit.',
+  watch:'Reaching for a discount to calm the customer in the first minute.'},
+ {t:'Competitor offer',p:'"Another provider is offering me a cheaper deal. Can you match it?"',
+  tone:'Calm, comparing',
+  why:'Ask what is attractive about the competing offer and what is included. Compare like for like. Restate what the customer already values with you before moving up the ladder.',
+  watch:'Matching a price you have not verified. Ask for the details first.'},
+ {t:'Repeated service problem',p:'"This is the third time it has dropped out. I am done."',
+  tone:'Angry',
+  why:'This is a resolve case. Own it, confirm the history, and fix the cause or set a firm fix path. A concession may be justified later, but only after the problem is addressed.',
+  watch:'Offering money instead of a fix. It confirms the problem is not being taken seriously.'},
+ {t:'Barely using it',p:'"I hardly use it anymore, so I do not see why I should pay for it."',
+  tone:'Neutral, practical',
+  why:'Discover what changed in how they use it. A right-sized plan or a feature that matches their current routine is a stronger save than a discount on something they do not use.',
+  watch:'Discounting a service the customer says they do not need.'},
+ {t:'Moving or life change',p:'"We are moving next month, so I need to cancel."',
+  tone:'Polite, firm',
+  why:'Check whether the service is available at the new address and whether a transfer is possible. If it is truly unavoidable, close well and document the reason accurately.',
+  watch:'Pushing offers on a customer with no real reason to stay. Confirm first, then decide.'},
+];
+
+function Tabs({tabs,cur,set,sm}){
+  return html`<div role="tablist" class="flex gap-2 overflow-x-auto pb-1">
+    ${tabs.map(([id,l])=>html`<button key=${id} role="tab" aria-selected=${cur===id} onClick=${()=>set(id)}
+      class="whitespace-nowrap px-4 py-2 text-sm font-medium rounded-full transition-colors ${cur===id?'bg-lav-700 text-white':'text-lav-700 bg-white/50 hover:bg-white'}">${l}</button>`)}
+  </div>`;
+}
+
+function Strip(){
+  const [done,setDone]=useState([false,false,false]);
+  const left=CADENCE.reduce((a,c,i)=>a+(done[i]?0:c.m),0);
+  return html`<section class="rounded-2xl bg-white/80 border border-white p-4 sm:p-5" aria-label="Daily Coaching Cadence and Active Focus Strip">
+    <div class="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+      <h2 class="font-semibold text-lg">Daily coaching cadence</h2>
+      <p class="text-sm text-lav-700">Active focus: Modules 3 and 4. ${left===0?'All steps complete for today.':left+' min left today.'}</p>
+    </div>
+    <div class="grid md:grid-cols-3 gap-3">
+      ${CADENCE.map((c,i)=>html`<button key=${i} onClick=${()=>setDone(done.map((v,j)=>j===i?!v:v))} aria-pressed=${done[i]}
+        style=${{background:COLS[i]}} class="text-left rounded-xl p-4 transition-shadow ${done[i]?'ring-4 ring-lav-700 opacity-80':'hover:shadow-lg'}">
+        <div class="flex items-center justify-between text-xs font-semibold text-lav-700"><span>Step ${i+1}${done[i]?' – done':''}</span><span>${c.m} mins</span></div>
+        <div class="mt-1 font-semibold ${done[i]?'line-through decoration-lav-700/40':''}">${c.t}</div>
+        <p class="mt-1 text-sm text-lav-700">${c.d}</p>
+      </button>`)}
+    </div>
+  </section>`;
+}
+
+function Roadmap(){
+  const sc={Completed:'bg-white/70 text-lav-700',Current:'bg-lav-700 text-white',Upcoming:'bg-white/70 text-lav-700'};
+  return html`<div class="grid md:grid-cols-2 gap-4">
+    ${PHASES.map(p=>html`<article key=${p.id} style=${{background:p.c}} class="rounded-2xl p-5 ${p.status==='Current'?'ring-4 ring-lav-700 shadow-lg':''}">
+      <div class="flex items-center justify-between gap-2">
+        <span class="text-sm font-semibold text-lav-700">${p.label}</span>
+        <span class="text-xs font-medium px-2.5 py-1 rounded-full ${sc[p.status]}">${p.status==='Current'?'Current active phase':p.status}</span>
+      </div>
+      <h3 class="mt-2 text-lg font-semibold leading-snug">${p.title}</h3>
+      <h4 class="mt-4 text-sm font-bold text-lav-700">Modules</h4>
+      <ul class="mt-1 space-y-1 text-sm text-lav-700 list-disc pl-5">${p.mods.map(m=>html`<li key=${m}>${m}</li>`)}</ul>
+      <h4 class="mt-3 text-sm font-bold text-lav-700">Activities</h4>
+      <ul class="mt-1 space-y-1 text-sm text-lav-700 list-disc pl-5">${p.acts.map(m=>html`<li key=${m}>${m}</li>`)}</ul>
+    </article>`)}
+  </div>`;
+}
+
+function Playbook(){
+  const [tier,setTier]=useState(0);
+  const L=LADDER[tier];
+  return html`<div class="space-y-6">
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="rounded-2xl p-5" style=${{background:'#FEC0B3'}}>
+        <h3 class="font-semibold">Module 3: Diagnose & Resolve Before Discounting</h3>
+        <p class="mt-1 text-sm text-lav-700">Find and fix the real reason for the cancel request first. Many saves need no concession.</p>
+      </div>
+      <div class="rounded-2xl p-5" style=${{background:'#D6BDE4'}}>
+        <h3 class="font-semibold">Module 4: Value & Discount Discipline</h3>
+        <p class="mt-1 text-sm text-lav-700">Show value tied to the customer's needs. Offer concessions in order, only when earned, to protect margin and APRPU.</p>
+      </div>
+    </div>
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="rounded-2xl p-5" style=${{background:'#98A4D8'}}><h3 class="font-bold text-lav-700">Do</h3>
+        <ul class="mt-2 space-y-2 text-sm">${DOS.map(d=>html`<li key=${d} class="flex gap-2"><span aria-hidden="true" class="text-lav-700 font-bold">+</span>${d}</li>`)}</ul></div>
+      <div class="rounded-2xl p-5" style=${{background:'#CE90C8'}}><h3 class="font-bold text-lav-700">Don't</h3>
+        <ul class="mt-2 space-y-2 text-sm">${DONTS.map(d=>html`<li key=${d} class="flex gap-2"><span aria-hidden="true" class="text-lav-700 font-bold">−</span>${d}</li>`)}</ul></div>
+    </div>
+    <div class="rounded-2xl bg-white/80 border border-white p-5">
+      <h3 class="font-semibold">Standard offer guidelines ladder</h3>
+      <p class="text-sm text-lav-700 mb-3">Amounts and eligibility come from the current offer policy.</p>
+      <${Tabs} sm=${true} cur=${'t'+tier} set=${id=>setTier(+id.slice(1))} tabs=${LADDER.map((l,i)=>['t'+i,l.k+': '+l.n])} />
+      <dl class="mt-3 grid sm:grid-cols-3 gap-3 text-sm">
+        <div class="rounded-xl bg-white/70 p-3"><dt class="font-semibold">Use when</dt><dd class="mt-1 text-lav-700">${L.when}</dd></div>
+        <div class="rounded-xl bg-white/70 p-3"><dt class="font-semibold">What to offer</dt><dd class="mt-1 text-lav-700">${L.what}</dd></div>
+        <div class="rounded-xl bg-white/70 p-3"><dt class="font-semibold">Guardrail</dt><dd class="mt-1 text-lav-700">${L.gate}</dd></div>
+      </dl>
+    </div>
+    <div class="rounded-2xl bg-white/80 border border-white p-5">
+      <h3 class="font-semibold">Sample talk tracks</h3>
+      <div class="mt-3 grid md:grid-cols-2 gap-3">
+        ${TALK.map(t=>html`<figure key=${t.t} class="rounded-xl p-4" style=${{background:'#FFD5E5'}}><figcaption class="text-xs font-bold text-lav-700">${t.m}: ${t.t}</figcaption>
+          <blockquote class="mt-1 text-sm text-lav-700">${t.s}</blockquote></figure>`)}
+      </div>
+    </div>
+  </div>`;
+}
+
+function Scorecard(){
+  const [a,setA]=useState(Array(12).fill(null));
+  const [f,setF]=useState(Array(7).fill(false));
+  const r=useMemo(()=>{
+    const y=a.filter(v=>v==='Y').length,n=a.filter(v=>v==='N').length,na=a.filter(v=>v==='NA').length;
+    const scored=y+n,pct=scored?Math.round(y/scored*100):null;
+    return {y,n,na,scored,pct,fail:f.some(Boolean),open:a.filter(v=>v===null).length};
+  },[a,f]);
+  const final=r.fail?0:r.pct;
+  const set=(i,v)=>setA(a.map((x,j)=>j===i?(x===v?null:v):x));
+  const reset=()=>{setA(Array(12).fill(null));setF(Array(7).fill(false));};
+  const btn=(i,v,on)=>html`<button key=${v} onClick=${()=>set(i,v)} aria-pressed=${a[i]===v}
+    class="px-3 py-1 text-xs font-medium rounded-lg border transition-colors ${a[i]===v?on:'bg-white border-white text-lav-700 hover:border-lav-700'}">${v==='NA'?'N/A':v==='Y'?'Yes':'No'}</button>`;
+  return html`<div class="grid lg:grid-cols-3 gap-4">
+    <div class="lg:col-span-2 rounded-2xl bg-white/80 border border-white p-5">
+      <h3 class="font-semibold">Daily 1:1 QA scorecard</h3>
+      <p class="text-sm text-lav-700">Score each step Yes, No, or N/A. N/A steps are left out of the percentage.</p>
+      <ol class="mt-3 divide-y divide-lav-100">
+        ${STEPS.map((s,i)=>html`<li key=${i} class="py-3 flex flex-wrap items-center justify-between gap-2">
+          <span class="text-sm"><span class="text-pk-700 mr-2">${i+1}.</span>${s}</span>
+          <span class="flex gap-1">${btn(i,'Y','bg-lav-700 border-lav-700 text-white')}${btn(i,'N','bg-pk-700 border-pk-700 text-white')}${btn(i,'NA','bg-lav-500 border-lav-500 text-lav-700')}</span>
+        </li>`)}
+      </ol>
+    </div>
+    <div class="space-y-4">
+      <div style=${{background:r.fail?'#FEC0B3':'#98A4D8'}} class="rounded-2xl p-5 ${r.fail?'ring-4 ring-pk-700':''}" aria-live="polite">
+        <div class="text-sm text-lav-700">Call score</div>
+        <div class="text-4xl font-bold text-lav-700">${final===null?'–':final+'%'}</div>
+        <p class="mt-1 text-sm text-lav-700">${r.fail?'Auto-fail triggered. The score is zero.':r.scored?`${r.y} Yes of ${r.scored} scored. ${r.na} N/A.${r.open?' '+r.open+' not scored yet.':''}`:'Score the steps to see the result.'}</p>
+        <button onClick=${reset} class="mt-3 text-sm font-medium text-lav-700 underline">Reset scorecard</button>
+      </div>
+      <div class="rounded-2xl p-5" style=${{background:'#FFD5E5'}}>
+        <h3 class="font-bold text-pk-700">Auto-fail triggers</h3>
+        <p class="text-sm text-lav-700">Any one of these sets the call score to zero.</p>
+        <ul class="mt-2 space-y-2">
+          ${AUTOFAIL.map((t,i)=>html`<li key=${i}><label class="flex gap-2 text-sm cursor-pointer">
+            <input type="checkbox" class="mt-1 accent-pink-500" checked=${f[i]} onChange=${()=>setF(f.map((x,j)=>j===i?!x:x))} />${t}</label></li>`)}
+        </ul>
+      </div>
+    </div>
+  </div>`;
+}
+
+function Engine(){
+  const [i,setI]=useState(0);
+  const [open,setOpen]=useState(false);
+  const s=SCEN[i];
+  const go=n=>{setI(n);setOpen(false);};
+  return html`<div class="rounded-2xl bg-white/80 border border-white p-5">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <h3 class="font-semibold">Mock call scenario engine</h3>
+      <button onClick=${()=>go((i+1+Math.floor(Math.random()*(SCEN.length-1)))%SCEN.length)} class="text-sm font-medium px-3 py-1.5 rounded-lg bg-lav-700 text-white hover:bg-pk-700">Pick a random scenario</button>
+    </div>
+    <div class="mt-3 flex flex-wrap gap-2">
+      ${SCEN.map((x,n)=>html`<button key=${n} onClick=${()=>go(n)} aria-pressed=${n===i}
+        class="text-sm px-3 py-1.5 rounded-full border ${n===i?'bg-lav-700 border-lav-700 text-white':'bg-white/70 border-white text-lav-700 hover:border-lav-700'}">${n+1}. ${x.t}</button>`)}
+    </div>
+    <div class="mt-4 rounded-xl p-5" style=${{background:'#D6BDE4'}}>
+      <div class="text-xs font-semibold text-lav-700">Customer mood: ${s.tone}</div>
+      <p class="mt-1 text-lg font-medium">${s.p}</p>
+      <p class="mt-2 text-sm text-lav-700">Agent task: diagnose the root cause, resolve it, and only then move up the offer ladder.</p>
+    </div>
+    <button onClick=${()=>setOpen(!open)} aria-expanded=${open} class="mt-3 w-full flex justify-between items-center rounded-xl bg-pk-500 px-4 py-3 text-sm font-semibold text-lav-700">
+      <span>Coaching rationale</span><span aria-hidden="true">${open?'−':'+'}</span></button>
+    ${open&&html`<div class="mt-2 grid sm:grid-cols-2 gap-3 text-sm">
+      <div class="rounded-xl bg-white/70 p-4"><div class="font-semibold">What good looks like</div><p class="mt-1 text-lav-700">${s.why}</p></div>
+      <div class="rounded-xl bg-white/70 p-4"><div class="font-semibold">Watch for</div><p class="mt-1 text-lav-700">${s.watch}</p></div>
+    </div>`}
+  </div>`;
+}
+
+function App(){
+  const [tab,setTab]=useState('road');
+  return html`<div class="max-w-6xl mx-auto px-4 py-6 space-y-5">
+    <header class="relative overflow-hidden rounded-3xl p-6 sm:p-8 pb-24 sm:pb-24" style=${{background:'linear-gradient(180deg,#98A4D8,#D6BDE4 55%,#FFD5E5)'}}>
+      <p class="text-sm font-medium text-lav-700">Customer Retention & Save Team</p>
+      <h1 class="text-2xl sm:text-4xl font-bold mt-1 text-lav-700">Retention Performance Recovery Program</h1>
+      <p class="relative z-10 mt-2 text-lav-700">Now in Week 2: Value Preservation & Strategic Negotiation</p>
+      <svg aria-hidden="true" class="absolute bottom-0 left-0 w-full h-16" viewBox="0 0 800 80" preserveAspectRatio="none"><path d="M0 50 L120 18 L220 44 L340 12 L470 46 L600 22 L800 48 V80 H0Z" fill="#CE90C8"/><path d="M0 62 Q150 28 300 58 T620 54 T800 60 V80 H0Z" fill="#FEC0B3"/><path d="M0 72 Q200 52 420 70 T800 68 V80 H0Z" fill="#FFD5E5"/></svg>
+    </header>
+    <${Strip} />
+    <${Tabs} cur=${tab} set=${setTab} tabs=${[['road','Roadmap & Sprint Status'],['play','Week 2 Playbook'],['qa','Daily 1:1 QA Scorecard'],['eng','Mock Call Scenario Engine']]} />
+    <main role="tabpanel">${tab==='road'?html`<${Roadmap}/>`:tab==='play'?html`<${Playbook}/>`:tab==='qa'?html`<${Scorecard}/>`:html`<${Engine}/>`}</main>
+  </div>`;
+}
+ReactDOM.createRoot(document.getElementById('root')).render(html`<${App}/>`);
+</script>
+</body>
+</html>
